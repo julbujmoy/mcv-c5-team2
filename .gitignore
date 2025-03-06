@@ -1,0 +1,4 @@
+yolo*.pt
+runs/
+KITTI*/
+yolo*/
