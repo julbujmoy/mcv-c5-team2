@@ -1,6 +1,0 @@
-train: /home/c5mcv02/KITTI-MOTS/training/image_02
-val: /home/c5mcv02/KITTI-MOTS/training/image_02
-test: /home/c5mcv02/KITTI-MOTS/training/image_02
-nc: 2
-names: ['car', 'pedestrian']
-labels: /home/c5mcv02/KITTI-MOTS/training/label_02 

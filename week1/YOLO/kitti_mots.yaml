@@ -1,0 +1,5 @@
+train: /home/toukapy/Documentos/Master CV/C5/ObjectDetect-week1/data/KITTI-MOTS/training/images
+val: /home/toukapy/Documentos/Master CV/C5/ObjectDetect-week1/data/KITTI-MOTS/testing/images
+test: /home/toukapy/Documentos/Master CV/C5/ObjectDetect-week1/data/KITTI-MOTS/testing/images
+nc: 2
+names: ['car', 'pedestrian']
