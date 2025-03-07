@@ -1,5 +1,5 @@
 yolo*.pt
 runs/
 KITTI*/
-yolo*/
+yolo_labels/
 /week1/data/
