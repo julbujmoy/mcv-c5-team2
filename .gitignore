@@ -1,4 +1,4 @@
-yolo*.pt
+*.pt
 runs/
 KITTI*/
 yolo_labels/
