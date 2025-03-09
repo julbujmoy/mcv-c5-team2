@@ -1,0 +1,4 @@
+path: /home/c5mcv02/KITTI-MOTS
+train: /home/c5mcv02/KITTI-MOTS/train/images
+val: /home/c5mcv02/KITTI-MOTS/val/images
+nc: 2

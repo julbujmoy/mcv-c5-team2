@@ -1,4 +1,6 @@
-yolo*.pt
+*.pt
 runs/
 KITTI*/
-yolo*/
+yolo_labels/
+/week1/data/
+BagImages/
