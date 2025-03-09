@@ -3,3 +3,7 @@ runs/
 KITTI*/
 yolo*/
 /output
+/output copy
+/output_crop
+/output_old
+*.txt
