@@ -2,37 +2,44 @@ import os
 import shutil
 import random
 
-# Configurar rutas
 DATASET_PATH = "/export/home/c5mcv02/KITTI-MOTS"
 TRAINING_PATH = os.path.join(DATASET_PATH, "training")
 TRAIN_OUTPUT = os.path.join(DATASET_PATH, "train")
 VAL_OUTPUT = os.path.join(DATASET_PATH, "val")
 
-# Crear carpetas de salida
+# Create output folders
 for split in [TRAIN_OUTPUT, VAL_OUTPUT]:
     os.makedirs(os.path.join(split, "images"), exist_ok=True)
     os.makedirs(os.path.join(split, "labels"), exist_ok=True)
 
-# Obtener todas las imágenes
-image_files = sorted(os.listdir(os.path.join(TRAINING_PATH, "images")))
-label_files = sorted(os.listdir(os.path.join(TRAINING_PATH, "labels")))
+sequences = sorted(os.listdir(os.path.join(TRAINING_PATH, "images")))
 
-# Mezclar aleatoriamente y dividir (80% train, 20% val)
+# 80% train, 20% val
 random.seed(42)
-data = list(zip(image_files, label_files))
-random.shuffle(data)
+random.shuffle(sequences)
 
-split_index = int(0.8 * len(data))
-train_data = data[:split_index]
-val_data = data[split_index:]
+split_index = int(0.8 * len(sequences))
+train_seqs = sequences[:split_index]
+val_seqs = sequences[split_index:]
 
-# Mover archivos a sus respectivas carpetas
-def move_files(data, split_path):
-    for img, lbl in data:
-        shutil.move(os.path.join(TRAINING_PATH, "images", img), os.path.join(split_path, "images", img))
-        shutil.move(os.path.join(TRAINING_PATH, "labels", lbl), os.path.join(split_path, "labels", lbl))
+def move_sequence(seq, split_path):
+    seq_images_path = os.path.join(TRAINING_PATH, "images", seq)
+    seq_labels_path = os.path.join(TRAINING_PATH, "labels", seq)
 
-move_files(train_data, TRAIN_OUTPUT)
-move_files(val_data, VAL_OUTPUT)
+    # create subfolders
+    os.makedirs(os.path.join(split_path, "images", seq), exist_ok=True)
+    os.makedirs(os.path.join(split_path, "labels", seq), exist_ok=True)
 
-print(f"División completada: {len(train_data)} train, {len(val_data)} val")
+    for img_file in sorted(os.listdir(seq_images_path)):
+        shutil.move(os.path.join(seq_images_path, img_file), os.path.join(split_path, "images", seq, img_file))
+
+    for lbl_file in sorted(os.listdir(seq_labels_path)):
+        shutil.move(os.path.join(seq_labels_path, lbl_file), os.path.join(split_path, "labels", seq, lbl_file))
+
+for seq in train_seqs:
+    move_sequence(seq, TRAIN_OUTPUT)
+
+for seq in val_seqs:
+    move_sequence(seq, VAL_OUTPUT)
+
+print(f"Completed: {len(train_seqs)} train sequences, {len(val_seqs)} val sequences")

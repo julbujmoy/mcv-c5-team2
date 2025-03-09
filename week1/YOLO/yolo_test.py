@@ -3,27 +3,25 @@ import cv2
 import os
 import glob
 
-# Configuración
-MODEL_PATH = "runs/train/all_aug/weights/best.pt"  # Cambia a tu modelo fine-tuneado si lo tienes
-IMAGE_ROOT = "/export/home/c5mcv02/KITTI-MOTS/testing/images/0000"  # Carpeta 0000 de test
-OUTPUT_ROOT = "runs/inference/all_aug_prueba"  # Carpeta donde se guardarán los resultados
+# Configuration
+MODEL_PATH = "runs/train/all_aug/weights/best.pt"  
+IMAGE_ROOT = "/export/home/c5mcv02/KITTI-MOTS/testing/images/0000"  
+OUTPUT_ROOT = "runs/inference/all_aug" 
 
-# Cargar modelo YOLOv8
+# Load model
 model = YOLO(MODEL_PATH)
 
-# Carpeta de salida para los resultados
-output_folder = os.path.join(OUTPUT_ROOT, "0000")  # Carpeta de salida específica para 0000
+# Output folder
+output_folder = os.path.join(OUTPUT_ROOT, "0000") 
 os.makedirs(output_folder, exist_ok=True)
 
-# Obtener imágenes de la carpeta 0000
-image_paths = sorted(glob.glob(os.path.join(IMAGE_ROOT, "*.png")))  # KITTI usa .png
+image_paths = sorted(glob.glob(os.path.join(IMAGE_ROOT, "*.png"))) 
 
-# Ejecutar inferencia en cada imagen
+# Inference for each image
 for img_path in image_paths:
-    results = model(img_path)  # Realizar inferencia
+    results = model(img_path)
     
-    # Guardar imagen con predicciones
     save_path = os.path.join(output_folder, os.path.basename(img_path))
-    results[0].save(save_path)  # Guarda la imagen con las predicciones
+    results[0].save(save_path) 
 
-print(f"Resultados guardados en {OUTPUT_ROOT}/0000")
+print(f"Results saved in {OUTPUT_ROOT}/0000")
