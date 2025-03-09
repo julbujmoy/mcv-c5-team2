@@ -149,7 +149,7 @@ output_base = "runs/inference/detr2"
 # Load a default font for drawing text
 font = ImageFont.load_default()
 
-# Definir colores para cada clase
+# Colors for each class
 class_colors = {
     "Garbage Bag": "red",
     "Paper Bag": "blue",
@@ -157,27 +157,22 @@ class_colors = {
 }
 
 for sample in tqdm(hf_dataset["test"]):
-    input_path = sample["image"]  # La ruta ya está definida en el dataset
+    input_path = sample["image"] 
     out_file = os.path.join(output_base, os.path.basename(input_path))
 
-    # Asegurar que la carpeta de salida existe
     os.makedirs(output_base, exist_ok=True)
 
-    # Cargar imagen
     image = Image.open(input_path).convert("RGB")
     orig_width, orig_height = image.size
 
-    # Preprocesar la imagen y ejecutar la inferencia
     inputs = feature_extractor(images=image, return_tensors="pt")
     outputs = model(**inputs)
 
-    # Ajustar tamaños a la imagen original
     target_sizes = torch.tensor([[orig_height, orig_width]])
     results = feature_extractor.post_process_object_detection(
         outputs, threshold=0.5, target_sizes=target_sizes
     )[0]
 
-    # Dibujar detecciones sobre la imagen
     draw = ImageDraw.Draw(image)
 
     for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
@@ -187,18 +182,13 @@ for sample in tqdm(hf_dataset["test"]):
         score_val = round(score.item(), 3)
         text = f"{class_name}: {score_val}"
 
-        # Seleccionar color basado en la clase
-        box_color = class_colors.get(class_name, "white")  # Blanco si no está en el diccionario
+        box_color = class_colors.get(class_name, "white") 
 
-        # Dibujar bounding box
         draw.rectangle((xmin, ymin, xmax, ymax), outline=box_color, width=2)
-
-        # Dibujar fondo del texto
+        
         text_bbox = draw.textbbox((xmin, ymin), text, font=font)
         draw.rectangle((xmin, ymin, text_bbox[2], text_bbox[3]), fill=box_color)
 
-        # Dibujar texto en blanco
         draw.text((xmin, ymin), text, fill="white", font=font)
 
-    # Guardar imagen con detecciones
     image.save(out_file)
