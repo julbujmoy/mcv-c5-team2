@@ -101,4 +101,4 @@ The project includes both quantitative and qualitative results for each model, a
 ### Setup Instructions:
 1. Install the necessary dependencies:
    ```bash
-   pip install torch torchvision detectron2 transformers ultralytics albumentations
+   pip install torch torchvision detectron2 transformers ultralytics albumentations torchmetrics pycocotools
