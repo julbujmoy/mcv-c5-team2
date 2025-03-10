@@ -1,4 +1,5 @@
-"""
+Link to the slides: https://docs.google.com/presentation/d/1aGU37kfOD-m90blNXqDtSdf-uyl62tmPf4vmZ2mTrd0/edit?usp=sharing
+
 # Week 1 Project: Object Detection on KITTI-MOTS Dataset
 
 ## Overview
