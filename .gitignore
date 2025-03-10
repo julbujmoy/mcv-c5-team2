@@ -1,7 +1,7 @@
-yolo*.pt
+*.pt
 runs/
 KITTI*/
-yolo*/
+yolo_labels/
 /week1/data/
 /week1/DETR/detr_finetuned_kitti_mots/
 /week1/DETR/kitti_mots_hf/
@@ -18,3 +18,5 @@ yolo*/
 /week1/DETR/detr_finetuned_kitti_mots-withaug-2/
 /week1/DETR/trainer_output/
 /week1/DETR/detr_finetuned_kitti_mots-noaug-good-1/
+BagImages/
+
