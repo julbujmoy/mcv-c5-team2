@@ -29,7 +29,7 @@ from detectron2.engine import DefaultTrainer
 
 #define data augmentation transforms
 transform = A.Compose([
-    # A.CenterCrop(width=500,height=250),
+    A.CenterCrop(width=500,height=250),
     A.HorizontalFlip(p=0.5),
     A.RandomBrightnessContrast(p=0.2),
     A.Affine(translate_percent=0.05, scale=(0.8, 1.2), rotate=(-20, 20),shear=(-15,15), p=0.2),
