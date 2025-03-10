@@ -122,10 +122,10 @@ if __name__ == '__main__':
                 box.append(d['annotations'][i]["bbox"])
                 labels.append(d['annotations'][i]["category_id"])
             all_gt_boxes.append(
-                    {"boxes": torch.Tensor(box), "labels": torch.Tensor(labels,dtpye=torch.int)})
+                    {"boxes": torch.Tensor(box), "labels": torch.Tensor(labels)})
             im = cv2.imread(d["file_name"])
             outputs = predictor(im)  
-            all_pred_boxes.append({"boxes": torch.Tensor(outputs['instances'].pred_boxes.tensor.tolist()), "labels": torch.Tensor(outputs['instances'].pred_classes.tolist(),dtype=torch.int), "scores": torch.Tensor(outputs['instances'].scores.tolist())})
+            all_pred_boxes.append({"boxes": torch.Tensor(outputs['instances'].pred_boxes.tensor.tolist()), "labels": torch.Tensor(outputs['instances'].pred_classes.tolist()), "scores": torch.Tensor(outputs['instances'].scores.tolist())})
             
             
         converted_data = []
@@ -153,6 +153,30 @@ if __name__ == '__main__':
         with open("gt.txt", "w") as f:
             json.dump(converted_data, f)
 
+                # Read the JSON file
+        with open("pred.txt", "r") as f:
+            loaded_data = json.load(f)
+
+        # Convert lists back to PyTorch tensors
+        all_pred_boxes = []
+        for item in loaded_data:
+            restored_item = {
+                'boxes': torch.tensor(item['boxes']), 
+                'labels': torch.tensor(item['labels'],dtype=torch.int),
+                'scores': torch.tensor(item['scores'])  
+            }
+            all_pred_boxes.append(restored_item)
+        
+        with open("gt.txt", "r") as f:
+            loaded_data = json.load(f)
+
+        all_gt_boxes = []
+        for item in loaded_data:
+            restored_item = {
+                'boxes': torch.tensor(item['boxes']),  
+                'labels': torch.tensor(item['labels'],dtype=torch.int) 
+            }
+            all_gt_boxes.append(restored_item)
      # Compute mean Average Precision (mAP)
     metric = MeanAveragePrecision(iou_type="bbox",box_format='xyxy',class_metrics=True)
     metric.update(all_pred_boxes, all_gt_boxes)
