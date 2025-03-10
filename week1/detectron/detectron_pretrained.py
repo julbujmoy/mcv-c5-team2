@@ -85,7 +85,7 @@ if __name__ == '__main__':
         out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
         cv2.imwrite(os.path.join("./output/",d["file_name"].split('/')[-2])+'_'+d["file_name"].split('/')[-1],np.array(out.get_image()[:, :, ::-1]))
 
-    if os.path.exists("predo.txt"):
+    if os.path.exists("pred.txt"):
         print('reading predictions')
         # Read the JSON file
         with open("pred.txt", "r") as f:
