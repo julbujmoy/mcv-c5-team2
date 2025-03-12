@@ -1,4 +1,4 @@
-yolo*.pt
+*.pt
 runs/
 KITTI*/
 yolo*/
@@ -8,3 +8,21 @@ yolo*/
 /output_old
 *.txt
 /frames
+yolo_labels/
+/week1/data/
+/week1/DETR/detr_finetuned_kitti_mots/
+/week1/DETR/kitti_mots_hf/
+/week1/cpp/
+/week1/DETR/detr_finetuned_kitti_mots-2/
+/week1/DETR/checkpoints/
+/week1/DETR/detr_finetuned_kitti_mots-bright/
+/week1/DETR/detr_finetuned_kitti_mots-bright-good-1/
+/week1/DETR/detr_finetuned_kitti_mots-horizon/
+/week1/DETR/detr_finetuned_kitti_mots-horizon-good/
+/week1/DETR/detr_finetuned_kitti_mots-horizon-good-1/
+/week1/DETR/detr_finetuned_kitti_mots-noaug-2/
+/week1/DETR/detr_finetuned_kitti_mots-noaug-good-1/
+/week1/DETR/detr_finetuned_kitti_mots-withaug-2/
+/week1/DETR/trainer_output/
+/week1/DETR/detr_finetuned_kitti_mots-noaug-good-1/
+BagImages/
