@@ -1,7 +1,6 @@
 *.pt
 runs/
 KITTI*/
-yolo*/
 /output
 /output copy
 /output_crop
