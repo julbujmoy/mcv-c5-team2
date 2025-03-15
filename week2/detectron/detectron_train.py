@@ -123,11 +123,23 @@ if __name__ == '__main__':
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")  
     cfg.SOLVER.IMS_PER_BATCH = 4  
     cfg.SOLVER.BASE_LR = 0.00025  
-    cfg.SOLVER.MAX_ITER = 1000  
-    cfg.SOLVER.STEPS = [] 
+    cfg.SOLVER.MAX_ITER = 10000  
+    cfg.SOLVER.STEPS = [6000,8000] 
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2  # Two classes, car and person
     
+    # cfg.MODEL.BACKBONE.FREEZE_AT = 2
+    # cfg.MODEL.ANCHOR_GENERATOR.SIZES = [[32, 64, 128, 256]]
+    # cfg.MODEL.RPN.NMS_THRESH = 0.7
+    # cfg.SOLVER.IMS_PER_BATCH = 4  
+    # cfg.SOLVER.BASE_LR = 3e-4 
+    # cfg.SOLVER.CLIP_GRADIENTS.ENABLED = True
+    # cfg.SOLVER.CLIP_GRADIENTS.CLIP_TYPE = "value"
+    # cfg.SOLVER.CLIP_GRADIENTS.CLIP_VALUE = 1.0
+    # cfg.SOLVER.AMP.ENABLED = True
+    # cfg.SOLVER.IMS_PER_BATCH = 4  
+
+
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     trainer = DefaultTrainer(cfg)
     trainer.resume_or_load(resume=False)
@@ -151,7 +163,6 @@ if __name__ == '__main__':
                     instance_mode=ColorMode.IMAGE_BW 
         )
         out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        print()
         
         new_out_path=os.path.join("./output/",'FINETUNED_'+d["file_name"].split('/')[-2]+'_'+d["file_name"].split('/')[-1])
         print(new_out_path)

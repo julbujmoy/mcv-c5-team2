@@ -173,8 +173,8 @@ if __name__ == '__main__':
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
     cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.00025
-    cfg.SOLVER.MAX_ITER = 10
-    cfg.SOLVER.STEPS = []
+    cfg.SOLVER.MAX_ITER = 10000
+    cfg.SOLVER.STEPS = [] #[6000,8000] 
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 

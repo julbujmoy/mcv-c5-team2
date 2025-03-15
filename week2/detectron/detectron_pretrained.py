@@ -39,8 +39,6 @@ def get_KITTI_dicts(img_dir,part):
         record["height"] = v["height"]
         record["width"] = v["width"]
 
-        annos = v["objects"]
-# "C:/Users/User/Documents/MASTER/c5/data_tracking_image_2/training/"
         img=np.array(Image.open(os.path.join(img_dir[:-9],'instances',v["image"])))
         # print(np.max(img))
         obj_ids = np.unique(img)
