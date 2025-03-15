@@ -28,3 +28,5 @@ yolo_labels/
 BagImages/
 /output_w1
 /week1/output_w1
+/output_kitti
+/week2/detectron/domainshift/output

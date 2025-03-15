@@ -60,14 +60,17 @@ def custom_mapper(dataset_dict):
     
     annos=[]
     for i in range(len(transformed["bboxes"])):
+        # print(np.shape(transformed["mask"][:,:,i]))
         annos.append({'bbox':torch.as_tensor(transformed["bboxes"][i]),
                       'category_id':torch.as_tensor(transformed["category_id"][i],dtype=torch.int),
-                      'segmentation':pycocotools.mask.encode(np.asarray(transformed["mask"][i], order="F")),
+                      'segmentation':pycocotools.mask.encode(np.asarray(transformed["mask"][:,:,i], order="F")), # mask_to_polygons(np.array(transformed["mask"][i])),
                       'bbox_mode':BoxMode.XYXY_ABS})
     
     instances = utils.annotations_to_instances(annos, transformed["image"].shape[:2],mask_format="bitmask")
+    # print(instances)
+    # dataset_dict["instances"] = instances
     dataset_dict["instances"] = utils.filter_empty_instances(instances)
-
+    # print(dataset_dict["instances"])
     return dataset_dict
 
 def get_KITTI_dicts(img_dir,part):
@@ -130,9 +133,9 @@ if __name__ == '__main__':
     KITTI_metadata = MetadataCatalog.get("KITTI_train")
     
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     predictor = DefaultPredictor(cfg)
 
 
@@ -164,16 +167,16 @@ if __name__ == '__main__':
             return build_detection_train_loader(cfg, mapper=custom_mapper)
 
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.DATASETS.TRAIN = ("KITTI_train",)
     cfg.INPUT.MASK_FORMAT="bitmask"
 
     cfg.DATASETS.TEST = ()
     cfg.DATALOADER.NUM_WORKERS = 2
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.00025
-    cfg.SOLVER.MAX_ITER = 10000
+    cfg.SOLVER.MAX_ITER = 1000
     cfg.SOLVER.STEPS = [] #[6000,8000] 
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
@@ -181,9 +184,9 @@ if __name__ == '__main__':
     trainer = AugmentedTrainer(cfg)  # Use our custom trainer
     trainer.resume_or_load(resume=False)
     trainer.train()
-    trainer.checkpointer.save("model_final_flip")
+    # trainer.checkpointer.save("model_final_flip")
 
-    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final_flip.pth")  # path to the model we just trained
+    cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5 
     predictor = DefaultPredictor(cfg)
 
