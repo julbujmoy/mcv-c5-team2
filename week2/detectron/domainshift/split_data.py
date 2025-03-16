@@ -1,6 +1,8 @@
 import json
 import random
 from collections import defaultdict
+
+file_path="C:/Users/User/Documents/MASTER/c5/ImageClassesCombinedWithCOCOAnnotations/coco_instances.json"
 out1="C:/Users/User/Documents/MASTER/c5/ImageClassesCombinedWithCOCOAnnotations/train_bags_coco.json"
 out2="C:/Users/User/Documents/MASTER/c5/ImageClassesCombinedWithCOCOAnnotations/val_bags_coco.json"
 
