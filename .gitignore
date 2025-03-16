@@ -24,3 +24,4 @@ yolo_labels/
 /week1/DETR/trainer_output/
 /week1/DETR/detr_finetuned_kitti_mots-noaug-good-1/
 BagImages/
+*.mp4
