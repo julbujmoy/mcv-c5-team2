@@ -1,3 +1,4 @@
+link to the slides: https://docs.google.com/presentation/d/1w6qQSF4deRC42Zx6FWwJyF1HAxUWxjHguNAuZCukiP0/edit?usp=sharing
 # Object Segmentation - Week 2
 
 ## Project: Object Segmentation
