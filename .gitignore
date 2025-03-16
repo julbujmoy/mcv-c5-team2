@@ -1,6 +1,11 @@
 *.pt
 runs/
 KITTI*/
+/output
+/output copy
+/output_crop
+/output_old
+*.txt
 yolo_labels/
 /week1/data/
 /week1/DETR/detr_finetuned_kitti_mots/
@@ -52,3 +57,4 @@ BagImages/
 /week2/Mask2Former/predictions.txt
 /week2/Mask2Former/predictions_coco.json
 /data/
+*.mp4
