@@ -58,7 +58,7 @@ def polygon_to_rle(segmentation, height, width):
 
 #define data augmentation transforms
 transform = A.Compose([
-    A.RandomCrop(width=500,height=250),
+    A.RandomCrop(width=200,height=200),
     A.HorizontalFlip(p=0.5),
     # A.RandomBrightnessContrast(p=0.2),
     # A.Affine(translate_percent=0.05, scale=(0.8, 1.2), rotate=(-20, 20),shear=(-15,15), p=0.2),
