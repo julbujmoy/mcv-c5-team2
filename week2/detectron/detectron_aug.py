@@ -25,14 +25,18 @@ import albumentations as A
 from detectron2.utils.visualizer import ColorMode
 from detectron2.data import detection_utils as utils
 from detectron2.engine import DefaultTrainer
-
+import PIL.Image as Image
+from torchvision.ops import masks_to_boxes
+from torch import tensor
+import pycocotools
+import pycocotools
 
 #define data augmentation transforms
 transform = A.Compose([
-    A.CenterCrop(width=500,height=250),
+    # A.CenterCrop(width=500,height=250),
     A.HorizontalFlip(p=0.5),
-    A.RandomBrightnessContrast(p=0.2),
-    A.Affine(translate_percent=0.05, scale=(0.8, 1.2), rotate=(-20, 20),shear=(-15,15), p=0.2),
+    # A.RandomBrightnessContrast(p=0.2),
+    # A.Affine(translate_percent=0.05, scale=(0.8, 1.2), rotate=(-20, 20),shear=(-15,15), p=0.2),
 ], bbox_params=A.BboxParams(format='pascal_voc', label_fields=['category_id'],filter_invalid_bboxes=True))
 #we define the format of the BboxParams as pascal_voc because we have them in the format XYXY_ABS in the custom dataset we have created
 
@@ -43,24 +47,30 @@ def custom_mapper(dataset_dict):
     image = utils.read_image(dataset_dict["file_name"], format="BGR")  # Read image
     bboxes=[]
     category_id=[]
+    masks=[]
     for i in dataset_dict["annotations"]:
         bboxes.append(i['bbox'])
         category_id.append(i['category_id'])
+        # print(pycocotools.mask.decode(i["segmentation"]))
+        masks.append(np.array(pycocotools.mask.decode(i["segmentation"])))
 
     # Apply Albumentations augmentations
-    transformed = transform(image=image,bboxes=bboxes,category_id=category_id)
-    
+    transformed = transform(image=image,bboxes=bboxes,category_id=category_id,mask=np.array(masks).transpose(1,2,0))
     dataset_dict["image"] = torch.as_tensor(transformed["image"].copy().transpose(2, 0, 1))  # Convert to tensor format
     
     annos=[]
     for i in range(len(transformed["bboxes"])):
+        # print(np.shape(transformed["mask"][:,:,i]))
         annos.append({'bbox':torch.as_tensor(transformed["bboxes"][i]),
                       'category_id':torch.as_tensor(transformed["category_id"][i],dtype=torch.int),
+                      'segmentation':pycocotools.mask.encode(np.asarray(transformed["mask"][:,:,i], order="F")), # mask_to_polygons(np.array(transformed["mask"][i])),
                       'bbox_mode':BoxMode.XYXY_ABS})
     
-    instances = utils.annotations_to_instances(annos, transformed["image"].shape[:2])
+    instances = utils.annotations_to_instances(annos, transformed["image"].shape[:2],mask_format="bitmask")
+    # print(instances)
+    # dataset_dict["instances"] = instances
     dataset_dict["instances"] = utils.filter_empty_instances(instances)
-
+    # print(dataset_dict["instances"])
     return dataset_dict
 
 def get_KITTI_dicts(img_dir,part):
@@ -79,23 +89,38 @@ def get_KITTI_dicts(img_dir,part):
         record["height"] = v["height"]
         record["width"] = v["width"]
 
-        annos = v["objects"]
+        img=np.array(Image.open(os.path.join(img_dir[:-9],'instances',v["image"])))
+        # print(np.max(img))
+        obj_ids = np.unique(img)
 
-        objs = []
-        for i in range(len(annos["id"])):
-            if annos["category"][i]==10: #ignore
-                continue
-            elif  annos["category"][i]==1: #cars
-                cat=0
-            else: #person
-                cat=1
+        
+        objs = []   
+        for i in range(len(obj_ids)):
+            if obj_ids[i]!=0:
+                mask=img==obj_ids[i]
+                mask=np.array(mask.astype(int),dtype=np.uint8)
 
-            obj = {
-                "bbox": [annos["bbox"][i][0],annos["bbox"][i][1],annos["bbox"][i][0]+annos["bbox"][i][2],annos["bbox"][i][1]+annos["bbox"][i][3]],
-                "bbox_mode": BoxMode.XYXY_ABS,
-                "category_id": cat,
-            }
-            objs.append(obj)
+            # # to correctly interpret the id of a single object
+                obj_id = obj_ids[i]
+                class_id = obj_id // 1000
+                # obj_instance_id = obj_id % 1000
+                # print(class_id)
+                if class_id==10: #ignore
+                    continue
+                elif  class_id==1: #cars
+                    cat=0 
+                else: #person
+                    cat=1
+                
+                box = masks_to_boxes(torch.Tensor(np.expand_dims(mask, axis=0)))
+                obj = {
+                    "bbox": np.array(box).squeeze(0),
+                    "bbox_mode": BoxMode.XYXY_ABS,
+                    "segmentation":pycocotools.mask.encode(np.asarray(mask, order="F")),
+                    "category_id": cat,
+                }
+                objs.append(obj)
+
         record["annotations"] = objs
         dataset_dicts.append(record)
     return dataset_dicts
@@ -108,9 +133,9 @@ if __name__ == '__main__':
     KITTI_metadata = MetadataCatalog.get("KITTI_train")
     
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     predictor = DefaultPredictor(cfg)
 
 
@@ -126,7 +151,11 @@ if __name__ == '__main__':
         outputs = predictor(im)  
         v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
         out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        cv2.imwrite(os.path.join("./output/",d["file_name"].split('/')[-2])+'_'+d["file_name"].split('/')[-1],np.array(out.get_image()[:, :, ::-1]))
+        
+        out_path=os.path.join("./output/",d["file_name"].split('/')[-2])+'_'+d["file_name"].split('/')[-1]
+        print(out_path)
+        os.makedirs(os.path.join("./output/",d["file_name"].split('/')[-2][:-5]),exist_ok=True)
+        cv2.imwrite(out_path,np.array(out.get_image()[:, :, ::-1]))
 
 
 
@@ -138,22 +167,24 @@ if __name__ == '__main__':
             return build_detection_train_loader(cfg, mapper=custom_mapper)
 
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.DATASETS.TRAIN = ("KITTI_train",)
+    cfg.INPUT.MASK_FORMAT="bitmask"
+
     cfg.DATASETS.TEST = ()
     cfg.DATALOADER.NUM_WORKERS = 2
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     cfg.SOLVER.IMS_PER_BATCH = 4
     cfg.SOLVER.BASE_LR = 0.00025
-    cfg.SOLVER.MAX_ITER = 10000
-    cfg.SOLVER.STEPS = []
+    cfg.SOLVER.MAX_ITER = 1000
+    cfg.SOLVER.STEPS = [] #[6000,8000] 
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
     trainer = AugmentedTrainer(cfg)  # Use our custom trainer
     trainer.resume_or_load(resume=False)
     trainer.train()
-
+    # trainer.checkpointer.save("model_final_flip")
 
     cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5 
@@ -173,8 +204,11 @@ if __name__ == '__main__':
                     instance_mode=ColorMode.IMAGE_BW
         )
         out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        print(os.path.join("./output/",'FINETUNED_flip_'+d["file_name"].split('/')[-2]+'_'+d["file_name"].split('/')[-1]))
-        cv2.imwrite(os.path.join("./output/",'FINETUNED_flip_'+d["file_name"].split('/')[-2]+'_'+d["file_name"].split('/')[-1]),np.array(out.get_image()[:, :, ::-1]))
+
+        new_out_path=os.path.join("./output/",'FINETUNED_flip'+d["file_name"].split('/')[-2]+'_'+d["file_name"].split('/')[-1])
+        print(new_out_path)
+        os.makedirs(os.path.join("./output/",'FINETUNED_flip'+d["file_name"].split('/')[-2][:-5]),exist_ok=True)
+        cv2.imwrite(os.path.join("./output/",'FINETUNED_flip'+d["file_name"].split('/')[-2]+'_'+d["file_name"].split('/')[-1]),np.array(out.get_image()[:, :, ::-1]))
 
 
     evaluator = COCOEvaluator("KITTI_val", output_dir="./output")

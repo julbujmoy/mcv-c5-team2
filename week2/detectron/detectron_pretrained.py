@@ -1,6 +1,9 @@
 import sys, os, distutils.core
 import torch, detectron2
 from torchmetrics.detection import MeanAveragePrecision
+import PIL.Image as Image
+from torchvision.ops import masks_to_boxes
+from torch import tensor
 
 TORCH_VERSION = ".".join(torch.__version__.split(".")[:2])
 CUDA_VERSION = torch.__version__.split("+")[-1]
@@ -36,23 +39,37 @@ def get_KITTI_dicts(img_dir,part):
         record["height"] = v["height"]
         record["width"] = v["width"]
 
-        annos = v["objects"]
+        img=np.array(Image.open(os.path.join(img_dir[:-9],'instances',v["image"])))
+        # print(np.max(img))
+        obj_ids = np.unique(img)
 
-        objs = []
-        for i in range(len(annos["id"])):
-            if annos["category"][i]==10: #ignore
-                continue
-            elif  annos["category"][i]==1: #cars
-                cat=2 #it is 2 to correspond with coco labels
-            else: #person
-                cat=0
+        
+        objs = []   
+        for i in range(len(obj_ids)):
+            if obj_ids[i]!=0:
+                mask=img==obj_ids[i]
+                mask=np.array(mask.astype(int),dtype=np.uint8)
 
-            obj = {
-                "bbox": [annos["bbox"][i][0],annos["bbox"][i][1],annos["bbox"][i][0]+annos["bbox"][i][2],annos["bbox"][i][1]+annos["bbox"][i][3]],
-                "bbox_mode": BoxMode.XYXY_ABS,
-                "category_id": cat,
-            }
-            objs.append(obj)
+            # # to correctly interpret the id of a single object
+                obj_id = obj_ids[i]
+                class_id = obj_id // 1000
+            # obj_instance_id = obj_id % 1000
+                # print(class_id)
+                if class_id==10: #ignore
+                    continue
+                elif  class_id==1: #cars
+                    cat=2 #it is 2 to correspond with coco labels
+                else: #person
+                    cat=0
+                
+                box = masks_to_boxes(torch.Tensor(np.expand_dims(mask, axis=0)))
+                obj = {
+                    "bbox": np.array(box).squeeze(0),
+                    "bbox_mode": BoxMode.XYXY_ABS,
+                    "masks":[mask],
+                    "category_id": cat,
+                }
+                objs.append(obj)
         record["annotations"] = objs
         dataset_dicts.append(record)
     return dataset_dicts
@@ -65,10 +82,10 @@ if __name__ == '__main__':
     KITTI_metadata = MetadataCatalog.get("KITTI_train")
     
     cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml"))
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  
     
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_R_50_FPN_3x.yaml")
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     predictor = DefaultPredictor(cfg)
 
 
@@ -79,106 +96,77 @@ if __name__ == '__main__':
     for d in random.sample(dataset_dicts, 3):        
         print(d["file_name"])
         im = cv2.imread(d["file_name"])
-        outputs = predictor(im)  
+        outputs = predictor(im) 
+        # print(outputs) 
         # Use `Visualizer` to draw the predictions on the image.
         v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
         out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        cv2.imwrite(os.path.join("./output/",d["file_name"].split('/')[-2])+'_'+d["file_name"].split('/')[-1],np.array(out.get_image()[:, :, ::-1]))
+        out_path=os.path.join("./output/",d["file_name"].split('/')[-2])+'_'+d["file_name"].split('/')[-1]
+        print(out_path)
+        os.makedirs(os.path.join("./output/",d["file_name"].split('/')[-2][:-5]),exist_ok=True)
+        cv2.imwrite(out_path,np.array(out.get_image()[:, :, ::-1]))
 
-    if os.path.exists("pred.txt"):
-        print('reading predictions')
-        # Read the JSON file
-        with open("pred.txt", "r") as f:
-            loaded_data = json.load(f)
-
-        # Convert lists back to PyTorch tensors
-        all_pred_boxes = []
-        for item in loaded_data:
-            restored_item = {
-                'boxes': torch.tensor(item['boxes']), 
-                'labels': torch.tensor(item['labels'],dtype=torch.int),
-                'scores': torch.tensor(item['scores'])  
-            }
-            all_pred_boxes.append(restored_item)
+        # mask=outputs['instances'].pred_masks.long().to("cpu")
+        # mask_path=os.path.join("./output/masks",d["file_name"].split('/')[-2][9:])+'_'+d["file_name"].split('/')[-1]
         
-        with open("gt.txt", "r") as f:
-            loaded_data = json.load(f)
-
-        all_gt_boxes = []
-        for item in loaded_data:
-            restored_item = {
-                'boxes': torch.tensor(item['boxes']),  
-                'labels': torch.tensor(item['labels'],dtype=torch.int) 
-            }
-            all_gt_boxes.append(restored_item)
-
-    else: 
-        all_pred_boxes, all_gt_boxes = [], []
-        for d in dataset_dicts:
-            box=[]
-            scores=[]
-            labels=[]
-            for i in range(len(d['annotations'])):
-                box.append(d['annotations'][i]["bbox"])
-                labels.append(d['annotations'][i]["category_id"])
-            all_gt_boxes.append(
-                    {"boxes": torch.Tensor(box), "labels": torch.Tensor(labels)})
-            im = cv2.imread(d["file_name"])
-            outputs = predictor(im)  
-            all_pred_boxes.append({"boxes": torch.Tensor(outputs['instances'].pred_boxes.tensor.tolist()), "labels": torch.Tensor(outputs['instances'].pred_classes.tolist()), "scores": torch.Tensor(outputs['instances'].scores.tolist())})
+        # final_mask=np.zeros((np.shape(mask)[1],np.shape(mask)[2],))
+        # for i in range(np.shape(mask)[0]):
+        #     # print(np.shape(mask[i,:,:]))
+        #     print(outputs["instances"].pred_classes.tolist()[i])
+        #     final_mask=final_mask+np.array(mask[i,:,:])*outputs["instances"].pred_classes.tolist()[i]
             
+        # final_mask=cv2.normalize(final_mask, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+        # cv2.imwrite(mask_path,np.array(final_mask))
+
+ 
+
+
+        # gt_path="C:/Users/User/Documents/MASTER/c5/data_tracking_image_2/instances/"+d["file_name"].split('/')[-2][8:]+'/'+d["file_name"].split('/')[-1]
+        # img = np.array(Image.open(gt_path))
+
+
+        # print(obj_ids)
+        # for i in range(len(obj_ids)):
+        #     obj_id = obj_ids[i]
+        #     class_id = obj_id // 1000
+        #     obj_instance_id = obj_id % 1000
+        #     print('Object nº '+str(i)+' of class '+str(class_id)+' and instance id '+str(obj_instance_id))
+
+
+
+    all_pred_boxes, all_gt_boxes = [], []
+    print(len(dataset_dicts))
+    for d in dataset_dicts:
+        box=[]
+        scores=[]
+        labels=[]
+        masks=[]
+        for i in range(len(d['annotations'])):
+            box.append(d['annotations'][i]["bbox"])
+            labels.append(d['annotations'][i]["category_id"])
+            masks.append(d['annotations'][i]["masks"])
+        
+        # print(np.shape(np.array(masks).squeeze(1)))
+
+        all_gt_boxes.append(
+                {"boxes": torch.Tensor(np.array(box)), "labels": tensor(np.array(labels),dtype=torch.int),"masks":tensor(np.array(masks).squeeze(1),dtype=torch.bool) })
+        im = cv2.imread(d["file_name"])
+        outputs = predictor(im)  
+        pred_mask=np.array(outputs['instances'].pred_masks.to("cpu"),dtype=np.uint8)
+
+        # print(np.shape(pred_mask))
+        # print(outputs['instances'].pred_masks.to("cpu"))
+        all_pred_boxes.append({"boxes": torch.Tensor(outputs['instances'].pred_boxes.tensor.tolist()), 
+                               "labels": tensor(outputs['instances'].pred_classes.tolist(),dtype=torch.int), 
+                               "scores": torch.Tensor(outputs['instances'].scores.tolist()),
+                               "masks": tensor(pred_mask,dtype=torch.bool)})
             
-        converted_data = []
-        for item in all_pred_boxes:
-            converted_item = {
-                'boxes': item['boxes'].tolist(),
-                'labels': item['labels'].tolist(),
-                'scores': item['scores'].tolist()
-            }
-            converted_data.append(converted_item)
-        
-        # Save to a file
-        with open("pred.txt", "w") as f:
-            json.dump(converted_data, f)
-
-
-        converted_data = []
-        for item in all_gt_boxes:
-            converted_item = {
-                'boxes': item['boxes'].tolist(),
-                'labels': item['labels'].tolist()
-            }
-            converted_data.append(converted_item)
-        # Save to a file
-        with open("gt.txt", "w") as f:
-            json.dump(converted_data, f)
-
-                # Read the JSON file
-        with open("pred.txt", "r") as f:
-            loaded_data = json.load(f)
-
-        # Convert lists back to PyTorch tensors
-        all_pred_boxes = []
-        for item in loaded_data:
-            restored_item = {
-                'boxes': torch.tensor(item['boxes']), 
-                'labels': torch.tensor(item['labels'],dtype=torch.int),
-                'scores': torch.tensor(item['scores'])  
-            }
-            all_pred_boxes.append(restored_item)
-        
-        with open("gt.txt", "r") as f:
-            loaded_data = json.load(f)
-
-        all_gt_boxes = []
-        for item in loaded_data:
-            restored_item = {
-                'boxes': torch.tensor(item['boxes']),  
-                'labels': torch.tensor(item['labels'],dtype=torch.int) 
-            }
-            all_gt_boxes.append(restored_item)
-     # Compute mean Average Precision (mAP)
-    metric = MeanAveragePrecision(iou_type="bbox",box_format='xyxy',class_metrics=True)
+    
+    # print(all_pred_boxes[-1])
+    # print(all_gt_boxes[-1])
+    # Compute mean Average Precision (mAP)
+    metric = MeanAveragePrecision(iou_type='segm',box_format='xyxy',class_metrics=True)
+    metric = MeanAveragePrecision(iou_type='bbox',box_format='xyxy',class_metrics=True)
     metric.update(all_pred_boxes, all_gt_boxes)
     video_metrics = metric.compute()
     print(video_metrics)
