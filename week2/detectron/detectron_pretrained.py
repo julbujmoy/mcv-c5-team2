@@ -135,6 +135,7 @@ if __name__ == '__main__':
 
 
     all_pred_boxes, all_gt_boxes = [], []
+    print(len(dataset_dicts))
     for d in dataset_dicts:
         box=[]
         scores=[]
@@ -165,6 +166,7 @@ if __name__ == '__main__':
     # print(all_gt_boxes[-1])
     # Compute mean Average Precision (mAP)
     metric = MeanAveragePrecision(iou_type='segm',box_format='xyxy',class_metrics=True)
+    metric = MeanAveragePrecision(iou_type='bbox',box_format='xyxy',class_metrics=True)
     metric.update(all_pred_boxes, all_gt_boxes)
     video_metrics = metric.compute()
     print(video_metrics)

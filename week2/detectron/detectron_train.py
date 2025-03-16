@@ -124,7 +124,7 @@ if __name__ == '__main__':
     cfg.SOLVER.IMS_PER_BATCH = 4  
     cfg.SOLVER.BASE_LR = 0.00025  
     cfg.SOLVER.MAX_ITER = 10000  
-    cfg.SOLVER.STEPS = [6000,8000] 
+    # cfg.SOLVER.STEPS = [] 
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2  # Two classes, car and person
     
@@ -138,7 +138,10 @@ if __name__ == '__main__':
     # cfg.SOLVER.CLIP_GRADIENTS.CLIP_VALUE = 1.0
     # cfg.SOLVER.AMP.ENABLED = True
     # cfg.SOLVER.IMS_PER_BATCH = 4  
-
+    # cfg.SOLVER.MAX_ITER = 4000
+    # cfg.SOLVER.BASE_LR = 8e-4
+    cfg.SOLVER.LR_SCHEDULER_NAME = "WarmupCosineLR"
+    cfg.SOLVER.WARMUP_ITERS = int(0)
 
     os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
     trainer = DefaultTrainer(cfg)
