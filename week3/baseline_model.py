@@ -15,7 +15,7 @@ from torchvision.models import resnet18
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Cargar los caracteres para las captions
-chars = ['<SOS>', '<EOS>', '<PAD>', '<UNK>', ' ', '!', '"', "”","“", '–',  '’','#', '&', "'", '(', ')', ',', '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '=', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'á', 'é', 'í', 'ó', 'ú', 'à', 'è', 'ì', 'ò', 'ù', 'â', 'ê', 'î', 'ô', 'û', 'ç', 'ü', 'ñ', '¿', '¡', 'ö']
+chars = ['<SOS>', '<EOS>', '<PAD>', '<UNK>', ' ', '!', '‘', '~' ,'—', '"', "”","“", '–',  '’','#', '&', "'", '(', ')', ',', '-', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '=', '?', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'ñ', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'á', 'é', 'í', 'ó', 'ú', 'à', 'è', 'ì', 'ò', 'ù', 'â', 'ê', 'ë', 'î', 'ô', 'û', 'ç', 'ü', 'ñ', '¿', '¡', 'ö', 'ï']
 
 NUM_CHAR = len(chars)
 idx2char = {k: v for k, v in enumerate(chars)}
@@ -56,10 +56,9 @@ class FoodRecipeDataset(Dataset):
         
         # Procesar la caption (título de la receta)
         caption = item['Title']
-        if not isinstance(caption, str):
-            print(f"Warning: Caption at index {idx} is {caption} of type {type(caption)}")
-    
-            caption = str(caption)
+        if not isinstance(caption, str) or pd.isna(caption):  # Si es NaN, lo reemplazamos
+            caption = ""
+            
         cap_list = list(caption)
         final_list = [chars[0]]  # <SOS>
         final_list.extend(cap_list)
@@ -67,13 +66,12 @@ class FoodRecipeDataset(Dataset):
         gap = self.max_len - len(final_list)
         final_list.extend([chars[2]] * gap)  # <PAD>
         cap_idx = []
-    
         for char in final_list:
             if char in char2idx:
-                cap_idx.append(char2idx[char])
+               cap_idx.append(char2idx[char]) 
             else:
-                cap_idx.append(char2idx['<UNK>'])  # Add <UNK> for unknown characters
-        
+                cap_idx.append(char2idx[' '])  # Add <UNK> for unknown characters
+
         return img, torch.tensor(cap_idx)
 
 
@@ -127,7 +125,7 @@ def decode_captions(caption_indices):
             if idx_value in char2idx.values() and idx_value != char2idx['<PAD>']:
                 decoded_caption.append(idx2char[idx_value])
             else:
-                decoded_caption.append('<UNK>')  # Append an unknown token for invalid indices
+                decoded_caption.append(' ')  # Append an unknown token for invalid indices
         caption_str = ''.join(decoded_caption).replace('<SOS>', '').replace('<EOS>', '').strip()
         captions.append(caption_str)
     return captions
@@ -211,7 +209,6 @@ def train(EPOCHS):
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, collate_fn=collate_fn, num_workers=4, pin_memory=True)
     valid_loader = DataLoader(valid_dataset, batch_size=32, collate_fn=collate_fn, num_workers=4, pin_memory=True)
     test_loader = DataLoader(test_dataset, batch_size=32, collate_fn=collate_fn, num_workers=4, pin_memory=True)
-
     
    # Inicializar el modelo, optimizador y función de pérdida
     model = Model().to(DEVICE)
