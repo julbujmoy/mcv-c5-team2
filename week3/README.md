@@ -4,6 +4,8 @@ This week, we started with the project of image captioning. We had a baseline th
 
 Link to the slides: https://docs.google.com/presentation/d/1k3j3JOhO4CImBR6ymKt4p-C3FjSkIGPyGcAsiFlpjaM/edit?usp=sharing
 
+The pdf of the paper is in the week3 folder.
+
 ## Dataset: Food Images
 
 We had food images and the caption is the title of the dish. The model needed to predict this caption.
