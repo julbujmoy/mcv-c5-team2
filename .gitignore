@@ -31,3 +31,4 @@ BagImages/
 /output_kitti
 /week2/detectron/domainshift/output
 /week2/detectron/domainshift/output_noaug
+/wandb
