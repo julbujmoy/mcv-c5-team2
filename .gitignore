@@ -32,3 +32,14 @@ BagImages/
 /week2/detectron/domainshift/output
 /week2/detectron/domainshift/output_noaug
 /wandb
+/week4/checkpoint-5000
+/week5/DeepSeek-VL
+/week5/AnyModal
+week5/anymodal.py
+/week5/__pycache__
+week5/inference.py
+week5/deepseek.py
+/image_captioning_model
+/week4
+week5/llama_1B_CLIP.py
+week5/vit_gpt2_freeze_just4_finetuned.py
