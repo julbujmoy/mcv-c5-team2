@@ -3,25 +3,21 @@ import anymodal
 import torch
 import vision
 from torch.utils.data import DataLoader
-import schedulefree
 import numpy as np
 from tqdm import tqdm
 import os
-import matplotlib.pyplot as plt
-from torch.amp import GradScaler
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 import evaluate
 from PIL import Image
 
 from huggingface_hub import login
-login(token="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")
+login(token="MY ACCESS TOKEN")
 
 # Load language model and tokenizer
 llm_tokenizer, llm_model = llm.get_llm(
     "meta-llama/Llama-3.2-1B",
-    access_token="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",
+    access_token="MY ACCESS TOKEN",
     use_peft=False,
 )
 llm_hidden_size = llm.get_hidden_size(llm_tokenizer, llm_model)
@@ -53,17 +49,9 @@ if not os.path.exists("image_captioning_model"):
 multimodal_model._load_model("/export/home/c5mcv02/laura_w5/task2/final_model/")
 
 
-
-
-
-
-
-
-
 # PATHS
 
 test_img_folder = "/export/home/c5mcv02/laura_w5/FoodImages_filtered/test_filtered"
-
 test_annotations = pd.read_csv("/export/home/c5mcv02/laura_w5/FoodImages_filtered/test_filtered.csv",
                                header=0)
 

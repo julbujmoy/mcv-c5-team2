@@ -11,12 +11,11 @@ import matplotlib.pyplot as plt
 from torch.amp import GradScaler
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 import evaluate
 from PIL import Image
 import wandb
 from huggingface_hub import login
-login(token="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")
+login(token="MY ACCESS TOKEN")
 
 wandb.init(
     project="LORA-LLAMA1B",
@@ -34,7 +33,7 @@ wandb.init(
 # Load language model and tokenizer
 llm_tokenizer, llm_model = llm.get_llm(
     "meta-llama/Llama-3.2-1B", 
-    access_token='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'
+    access_token='MY ACCESS TOKEN'
 )
 llm_hidden_size = llm.get_hidden_size(llm_tokenizer, llm_model)
 
@@ -112,10 +111,8 @@ val_size = len(val_dataset)
 # DataLoader configuration
 batch_size = 6
 train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-# train_loader = DataLoader(torch.utils.data.Subset(train_dataset, range(train_size//5)), batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-# val_loader = DataLoader(torch.utils.data.Subset(val_dataset, range(val_size//5)), batch_size=batch_size, shuffle=True)
 
 train_size = len(train_loader)
 val_size = len(val_loader)
@@ -250,22 +247,6 @@ for epoch in range(num_epochs):
 
 multimodal_model.eval()
 
-#for _ in range(5):
-#    sample_idx = np.random.randint(len(test_dataset))
-#    sample = val_dataset[sample_idx]
-#    
-#    # save the image with the caption and the generated caption
-#    image = sample['image']
-#    caption = sample['text']
-#    generated_caption = multimodal_model.generate(sample['input'], max_new_tokens=120)
-#
-#    plt.imshow(image)
-#    plt.axis('off')
-#    plt.savefig(f"image_{sample_idx}.png")
-#
-#    with open(f"image_{sample_idx}_caption.txt", "w") as f:
-#        f.write(f"Actual Caption: {caption}\n")
-#        f.write(f"Generated Caption: {generated_caption}\n")
         
         
 predictions = []
