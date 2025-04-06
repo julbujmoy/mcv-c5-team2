@@ -8,12 +8,39 @@ The pdf of the paper is in the week4 folder.
 
 ## CLEANED DATA
 
+In this project we cleaned the dataset in other to reduce noisy data. You can download it from this link:
+
+https://drive.google.com/file/d/1z7B_C37B-HC8L95LO7s-p4Spv4QgFy1K/view?usp=sharing 
+
+To clean these images, we used this scripts:
+
+```
+imageCleaning/preprocess.py
+imageCleaning/remove_images.py
+``` 
+
 ## TASK1
+
+To run the first two approaches for this task use the scripts:
+
+```
+task1/vit_gpt2_attention.py
+task1/vit_gpt2_teacherF.py
+```
+
+After data cleaning, we used this script:
+```
+task1/vit_gpt2_finetuned.py
+```
+
+Inside this script, you have commented options to freeze ViT entirely, GPT-2 entirely or just the deepest 4 layers of GPT-2.
+
+Then, you have the Reinforcement Learning version of that script and the nuclear sampling version.
 
 ## TASK2
 
 ### DeepSeek-VL 7B
-To run inference on this model use the script deepseek.py
+To run inference on this model use the script task2/deepseek.py
 
 You will need some requirements for DeepSeek:
 
@@ -24,4 +51,4 @@ pip install -e .
 ``` 
 
 ### Finetune Llama 3.2.
-To finetune the 1B or 3B models use the main script train.py. To change the Lora configuration, change the function add_peft in llm.py. Make sure to input your token for huggingface to be able to access the models.
+To finetune the 1B or 3B models use the main script task2/train.py. To change the Lora configuration, change the function add_peft in task2/llm.py. Make sure to input your token for huggingface to be able to access the models.
