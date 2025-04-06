@@ -21,7 +21,7 @@ You will need some requirements for DeepSeek:
 git clone https://github.com/deepseek-ai/DeepSeek-VL
 cd DeepSeek-VL
 pip install -e .
-``
+``` 
 
 ### Finetune Llama 3.2.
 To finetune the 1B or 3B models use the main script train.py. To change the Lora configuration, change the function add_peft in llm.py. Make sure to input your token for huggingface to be able to access the models.
