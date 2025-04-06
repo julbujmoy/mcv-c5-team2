@@ -52,3 +52,5 @@ pip install -e .
 
 ### Finetune Llama 3.2.
 To finetune the 1B or 3B models use the main script task2/train.py. To change the Lora configuration, change the function add_peft in task2/llm.py. Make sure to input your token for huggingface to be able to access the models.
+
+To run inference on the trained llama models, use the script task2/inferllama.py
