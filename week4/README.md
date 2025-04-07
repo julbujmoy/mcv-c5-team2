@@ -2,7 +2,7 @@
 
 This week, we continued with the project of image captioning. We had a baseline with a ViT-GPT2 architecture for task 1, and the Llama 3.2 models for task2. The aim of this project in task 1 was to finetune the encoder, the decoder, and the whole model trying to achieve better results in generating text that descrbed the picture. For task 2 the aim was to finetune Llama 3.2 1B and 3B using LoRA using a trained ViT, and also assess the perfomance of a pretrained large multimodal model, in our case DeepSeek-VL 7B
 
-Link to the slides: https://docs.google.com/presentation/d/1k3j3JOhO4CImBR6ymKt4p-C3FjSkIGPyGcAsiFlpjaM/edit?usp=sharing
+Link to the slides: [https://docs.google.com/presentation/d/1k3j3JOhO4CImBR6ymKt4p-C3FjSkIGPyGcAsiFlpjaM/edit?usp=sharing](https://docs.google.com/presentation/d/1_VTyKqShtiHdJu-5Lz6lIb9iYn4qzhcpEYAMDTXytzM/edit?usp=sharing)
 
 The pdf of the paper is in the week4 folder.
 
